@@ -6,8 +6,10 @@ import React from "react"
 
 class InputArea extends React.Component{
 
+
   constructor(){
     super()
+    this.serverURL = "http://127.0.0.1:5000";
     this.state={
       memeImages:[],
       randomImage:"https://i.imgflip.com/30b1gx.jpg",
@@ -24,11 +26,13 @@ class InputArea extends React.Component{
     this.fontSizeChange = this.fontSizeChange.bind(this)
     this.fontColorChange = this.fontColorChange.bind(this)
     this.onFileLoad = this.onFileLoad.bind(this)
+    this.downloadImage = this.downloadImage.bind(this)
 
   }
 
+  //change the counter so that the next image is used
    changeImage(){
-     console.log("Clicked");
+     //console.log("Clicked");
     this.setState(currentState=>{
       return{
       counter:currentState.counter + 1,
@@ -36,12 +40,13 @@ class InputArea extends React.Component{
     }
     }
   )
+  fetch(this.serverURL+"/setImage?id="+this.state.counter);
   }
 
 
-
+//get the images and their urls
   componentWillMount(){
-    fetch("http://127.0.0.1:5000/getimages")
+    fetch(this.serverURL+"/getimages")
     .then(response => response.json())
     .then(response=>{
       const {data} = response
@@ -52,12 +57,15 @@ class InputArea extends React.Component{
     console.log();
   }
 
+
+  //Create a new text box
   addTextBox(){
     return(
       <input className="inputBox" type="text" placeholder="Top Text" />
     )
   }
 
+  // Drop a text box on the image
   dropImage(event){
     const id= event.dataTransfer.getData("id")
     console.log(id);
@@ -66,6 +74,7 @@ class InputArea extends React.Component{
     left: event.clientX,
     top: event.clientY,
   };
+    // new text box not present in the state
     if(id==-1){
       console.log(id);
       event.preventDefault()
@@ -81,6 +90,8 @@ class InputArea extends React.Component{
     })
 
   }
+  // Text box is already created and present in  this.state
+  // only change in coordinates
   else{
     const index = this.state.inputBoxes.findIndex(element=>element.boxID==id)
     let newBoxArray = [...this.state.inputBoxes]
@@ -102,16 +113,20 @@ class InputArea extends React.Component{
     event.dataTransfer.setData("id",id)
   }
 
+  // change the font style of the text
   fontSizeChange(event){
     const fSize = event.target.value
     this.setState({fontSize:parseInt(fSize,10)})
   }
 
+  // change the font color of the text
   fontColorChange(event){
     console.log(event.target.value);
     this.setState({color:event.target.value})
   }
 
+  // on file upload get the binary contents of the file
+  // and set the contents of the file
   onFileLoad(event){
     const file = event.currentTarget.files[0]
     console.log(file);
@@ -127,13 +142,32 @@ class InputArea extends React.Component{
   }
 
 
+  downloadImage(event){
+      const postData = this.state.inputBoxes.map((item)=>{
+
+        const textDetails={
+          left: item.style.left,
+          top: item.style.top,
+          text: document.getElementById(item.boxID).value
+        }
+        return textDetails
+      });
+      const options={
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body: JSON.stringify(postData)
+      }
+      fetch(this.serverURL+"/downloadimage",options)
+  }
 
 
 
 
   render(){
 
-    console.log(this.state.inputBoxes);
+    //console.log(this.state.inputBoxes);
     const inputboxes=this.state.inputBoxes.map((item)=>{
 
       const styleClass={
@@ -143,7 +177,7 @@ class InputArea extends React.Component{
         fontSize: this.state.fontSize,
         color:this.state.color
       }
-      return <textarea id={item.BoxID} key={item.BoxID} className="memeInputBox" style={styleClass} type="text" placeholder="Enter Meme Text" draggable onDragStart={(e)=>{this.dragStart(e,item.boxID)}} />
+      return <textarea id={item.boxID} key={item.boxID} className="memeInputBox" style={styleClass} type="text" placeholder="Enter Meme Text" draggable onDragStart={(e)=>{this.dragStart(e,item.boxID)}} />
     });
 
       return(
@@ -170,6 +204,7 @@ class InputArea extends React.Component{
         {inputboxes}
         <label className="uploadLabel" htmlFor  ="upload-button" >Upload Custom Image </label>
         <input type="file" id="upload-button" style={{ display: "none" }} onChange={this.onFileLoad}/>
+        <button className = "submitButton" onClick = {this.downloadImage}>submit</button>
         </div>
       )
   }

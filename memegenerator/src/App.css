@@ -99,4 +99,22 @@
   width: 40em;
   color: white;
   font-family: VT323, monospace;
+  font-size: 1em;
+
+}
+
+.submitButton{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    background-color: blue;
+    width: 40em;
+    color: white;
+    font-family: VT323, monospace;
+    margin-top: 0.3em;
+    border: None;
+    font-size: 1em;
+
+
 }
